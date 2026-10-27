@@ -21,10 +21,10 @@ if st.session_state.pagina >= 2:
             /* Fundo Aurora Boreal */
             .stApp {
                 background: 
-                    radial-gradient(circle at 15% 20%, rgba(0, 255, 179, 0.25) 0%, transparent 45%),
-                    radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.25) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 80%, rgba(0, 217, 255, 0.22) 0%, transparent 55%),
-                    linear-gradient(160deg, rgba(6, 14, 28, 0.88) 0%, rgba(5, 32, 44, 0.85) 50%, rgba(20, 10, 38, 0.88) 100%) !important;
+                    radial-gradient(circle at 15% 20%, rgba(0, 255, 179, 0.25) 0%, transparent 75%),
+                    radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.25) 0%, transparent 80%),
+                    radial-gradient(circle at 50% 80%, rgba(0, 217, 255, 0.22) 0%, transparent 75%),
+                    linear-gradient(160deg, rgba(6, 14, 28, 0.88) 0%, rgba(5, 32, 44, 0.85) 70%, rgba(20, 10, 38, 0.88) 900%) !important;
                 background-attachment: fixed !important;
                 background-size: cover !important;
             }
