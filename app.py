@@ -24,27 +24,55 @@ if "quiz_resolvido" not in st.session_state:
     st.session_state.quiz_resolvido = False
 
 # ========================================================
-# TRILHA SONORA DE FUNDO (ÁUDIO PERSISTENTE EM LOOP)
+# TRILHA SONORA DE FUNDO (SINTETIZADA VIA WEB AUDIO API)
 # ========================================================
-URL_MUSICA = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
+# Toca um dedilhado romântico contínuo em harmonia suave
+musica_fundo_script = """
+<script>
+    // Inicializador do Web Audio API para música romântica contínua
+    window.tocarMusicaRomantica = function() {
+        if (window.bgMusicStarted) return;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioCtx();
+            window.bgMusicStarted = true;
 
-audio_player_html = f"""
-    <audio id="bg-audio" loop preload="auto">
-        <source src="{URL_MUSICA}" type="audio/mp3">
-    </audio>
-    <script>
-        const audio = document.getElementById('bg-audio');
-        if (audio) {{
-            audio.volume = 0.35;
-            audio.play().catch(() => {{
-                document.addEventListener('click', () => {{
-                    audio.play();
-                }}, {{ once: true }});
-            }});
-        }}
-    </script>
+            const notas = [261.63, 329.63, 392.00, 523.25, 329.63, 440.00, 523.25, 392.00]; // C - E - G - C - E - A - C - G
+            let step = 0;
+
+            function tocarNota() {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notas[step % notas.length], ctx.currentTime);
+                
+                gain.gain.setValueAtTime(0.001, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 1.3);
+
+                step++;
+                setTimeout(tocarNota, 450);
+            }
+            tocarNota();
+        } catch (e) {
+            console.log("Audio Web:", e);
+        }
+    };
+
+    // Toca no primeiro clique em qualquer lugar da tela
+    document.addEventListener('click', () => {
+        window.tocarMusicaRomantica();
+    }, { once: false });
+</script>
 """
-components.html(audio_player_html, height=0, width=0)
+components.html(musica_fundo_script, height=0, width=0)
 
 # ========================================================
 # ESTILOS CSS GLOBAIS (AURORA BOREAL, GLASSMORPHISM, FONTES)
@@ -53,7 +81,7 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Great+Vibes&display=swap');
 
-    /* Ocultar elementos padrão do Streamlit */
+    /* Ocultar elementos nativos do Streamlit */
     header[data-testid="stHeader"] { display: none !important; }
     footer { display: none !important; }
     #MainMenu { visibility: hidden !important; }
@@ -70,7 +98,6 @@ st.markdown("""
         color: #e2e8f0 !important;
     }
 
-    /* Tipografia de Cabeçalhos */
     h1, h2, h3, .stTitle {
         font-family: 'Outfit', sans-serif !important;
         font-weight: 700 !important;
@@ -79,7 +106,6 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(0, 245, 212, 0.35) !important;
     }
 
-    /* Cartões Glassmorphism */
     .card-glass {
         background: rgba(15, 23, 42, 0.58) !important;
         backdrop-filter: blur(18px) !important;
@@ -91,7 +117,6 @@ st.markdown("""
         box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* Tag / Crachá */
     .badge-tag {
         display: inline-flex;
         align-items: center;
@@ -107,7 +132,6 @@ st.markdown("""
         letter-spacing: 0.3px;
     }
 
-    /* Cartão de Cupom */
     .cupom-card {
         background: linear-gradient(135deg, rgba(255, 42, 109, 0.15), rgba(123, 44, 191, 0.22));
         border: 1.5px dashed rgba(255, 215, 0, 0.55);
@@ -140,7 +164,6 @@ st.markdown("""
         color: #ffffff;
     }
 
-    /* Estilização Geral dos Botões */
     div.stButton > button {
         background: linear-gradient(135deg, #05ffa1 0%, #00b4d8 100%) !important;
         color: #041019 !important;
@@ -160,7 +183,6 @@ st.markdown("""
         box-shadow: 0 12px 32px rgba(5, 255, 161, 0.55) !important;
     }
 
-    /* Botões de Ação Secundária */
     .botao-secundario div.stButton > button {
         background: linear-gradient(135deg, #7b2cbf 0%, #3a0ca3 100%) !important;
         color: #ffffff !important;
@@ -170,7 +192,7 @@ st.markdown("""
         box-shadow: 0 12px 32px rgba(123, 44, 191, 0.65) !important;
     }
 
-    /* Legibilidade do Quiz (Rádios e Perguntas) */
+    /* Legibilidade do Quiz */
     div[data-testid="stRadio"] label,
     div[data-testid="stRadio"] p,
     div[data-testid="stRadio"] span,
@@ -203,13 +225,29 @@ st.markdown("""
         border-color: #05ffa1 !important;
     }
 
-    /* Carta Manuscrita */
+    /* Animação e Carta Manuscrita */
+    @keyframes desdobrarCarta {
+        0% {
+            opacity: 0;
+            transform: translateY(40px) scale(0.9) rotateX(15deg);
+        }
+        70% {
+            transform: translateY(-6px) scale(1.01) rotateX(0deg);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.35);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1) rotateX(0deg);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5);
+        }
+    }
+
     .carta-tinteiro {
         font-family: 'Great Vibes', cursive !important;
         font-size: 28px !important;
         line-height: 1.7 !important;
         color: #fffaf0 !important;
-        background: rgba(255, 255, 255, 0.07) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(20px) !important;
         -webkit-backdrop-filter: blur(20px) !important;
         border: 1px solid rgba(255, 255, 255, 0.22) !important;
@@ -217,6 +255,7 @@ st.markdown("""
         padding: 55px 34px 40px 34px !important;
         position: relative;
         margin-top: 35px;
+        animation: desdobrarCarta 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
         text-shadow: 0 0 10px rgba(255, 249, 234, 0.2) !important;
     }
@@ -512,7 +551,7 @@ elif st.session_state.pagina == 3:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================
-# PÁGINA 4: O QUIZ DO AMOR (COM OPÇÕES VISÍVEIS)
+# PÁGINA 4: O QUIZ DO AMOR (COM FITA SE ABRINDO)
 # ========================================================
 elif st.session_state.pagina == 4:
     st.markdown("""
@@ -544,15 +583,48 @@ elif st.session_state.pagina == 4:
     if st.button("🔓 Confirmar Respostas", use_container_width=True):
         if p1 == "Na minha casa" and p2 == "Você":
             st.session_state.quiz_resolvido = True
-            st.snow()
         else:
             st.session_state.quiz_resolvido = False
             st.warning("Hum... quase! Dá uma pensadinha com mais carinho 😂")
 
+    # ANIMAÇÃO DA FITA SE DESENROLANDO AO ACERTAR
     if st.session_state.get("quiz_resolvido", False):
+        animacao_fita = """
+        <div id="ribbon-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <style>
+                @keyframes desatarFita {
+                    0% { transform: scaleX(0) rotate(-6deg); opacity: 0; }
+                    40% { transform: scaleX(1.1) rotate(2deg); opacity: 1; }
+                    70% { transform: scaleX(1) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(-50px) scale(1.05); opacity: 0; }
+                }
+                .fita-magica {
+                    width: 120vw;
+                    height: 55px;
+                    background: linear-gradient(90deg, #ff2a6d, #ffd166, #ff2a6d);
+                    box-shadow: 0 0 35px rgba(255, 42, 109, 0.9), inset 0 2px 5px rgba(255,255,255,0.8);
+                    border-top: 2px dashed rgba(255,255,255,0.6);
+                    border-bottom: 2px dashed rgba(255,255,255,0.6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #fff;
+                    font-family: 'Outfit', sans-serif;
+                    font-size: 20px;
+                    font-weight: 800;
+                    letter-spacing: 3px;
+                    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                    animation: desatarFita 2.4s ease-in-out forwards;
+                }
+            </style>
+            <div class="fita-magica">✨ LACRE DESATADO COM AMOR ✨</div>
+        </div>
+        """
+        components.html(animacao_fita, height=120)
+
         st.markdown("""
             <div style="background: rgba(5, 255, 161, 0.15); border: 1px solid #05ffa1; border-radius: 14px; padding: 14px 18px; margin: 16px 0; color: #05ffa1; font-weight: 600; text-align: center;">
-                ✨ Parabéns! Você acertou tudo e quebrou o selo da carta!
+                ✨ Parabéns! A fita foi desatada e o selo da carta está liberado!
             </div>
         """, unsafe_allow_html=True)
 
@@ -579,9 +651,46 @@ elif st.session_state.pagina == 4:
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================
-# PÁGINA 5: A CARTA SECRETA COM FOGOS E TEXTO PERSONALIZADO
+# PÁGINA 5: A CARTA SECRETA (COM SOM DE PAPEL SE ABRINDO)
 # ========================================================
 elif st.session_state.pagina == 5:
+    # Efeito Sonoro de Papel / Carta se abrindo (White Noise filtrado sintetizado)
+    som_carta = """
+    <script>
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioCtx();
+            const bufferSize = ctx.sampleRate * 0.8;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(900, ctx.currentTime);
+            filter.frequency.linearRampToValueAtTime(300, ctx.currentTime + 0.7);
+
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.75);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+
+            noise.start();
+        } catch(e) {
+            console.log(e);
+        }
+    </script>
+    """
+    components.html(som_carta, height=0, width=0)
+
+    # Explosão de corações iluminados
     efeito_explosao = """
     <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></canvas>
     <script>
