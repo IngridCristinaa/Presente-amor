@@ -8,6 +8,31 @@ st.set_page_config(page_title="Para Meu Amor ❤️", page_icon="💌", layout="
 
 # Memória de navegação e cupons sorteados
 if "pagina" not in st.session_state:
+    # ========================================================
+# TRILHA SONORA DE FUNDO (ÁUDIO PERSISTENTE EM LOOP)
+# ========================================================
+# Pode utilizar uma hiperligação direta para um ficheiro .mp3 na web ou um caminho/base64 local
+URL_MUSICA = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
+
+audio_player_html = f"""
+    <audio id="bg-audio" loop preload="auto">
+        <source src="{URL_MUSICA}" type="audio/mp3">
+    </audio>
+    <script>
+        const audio = document.getElementById('bg-audio');
+        if (audio) {{
+            audio.volume = 0.35; // Volume a 35% para ficar suave
+            // Tenta reproduzir automaticamente caso já tenha ocorrido interação prévia
+            audio.play().catch(() => {{
+                // Caso o navegador bloqueie o autoplay, inicia no primeiro clique na página
+                document.addEventListener('click', () => {{
+                    audio.play();
+                }}, {{ once: true }});
+            }});
+        }}
+    </script>
+"""
+components.html(audio_player_html, height=0, width=0)
     st.session_state.pagina = 1
 if "cupons_obtidos" not in st.session_state:
     st.session_state.cupons_obtidos = []
@@ -467,30 +492,34 @@ elif st.session_state.pagina == 3:
 # ========================================================
 elif st.session_state.pagina == 4:
     st.markdown("""
-        <div class="card-glass">
+        <div class="card-glass" style="margin-bottom: 20px;">
             <span class="badge-tag">🧩 ETAPA 2</span>
             <h1 style="margin: 6px 0 10px 0;">Quiz do Amor</h1>
             <p style="font-size: 15px; color: #cbd5e1; margin: 0;">
-                Responda acertando as respostas certas para quebrar o lacre da cartinha secreta:
+                Responda acertando as opções certas para quebrar o lacre da cartinha secreta:
             </p>
         </div>
     """, unsafe_allow_html=True)
 
-    with st.container():
-        st.markdown('<div class="card-glass">', unsafe_allow_html=True)
-        p1 = st.radio(
-            "1) Onde foi o nosso primeiro beijo?",
-            ["No cinema", "Na pracinha", "No carro", "Na casa de amigos"]
-        )
-        st.write("")
-        p2 = st.radio(
-            "2) Quem se apaixonou primeiro?",
-            ["Você", "Eu", "Os dois no mesmo instante"]
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Perguntas com fundo visível
+    p1 = st.radio(
+        "1) Onde foi o nosso primeiro beijo?",
+        ["No cinema", "Na pracinha", "No carro", "Na minha casa"],
+        index=None
+    )
+
+    st.write("")
+
+    p2 = st.radio(
+        "2) Quem se apaixonou primeiro?",
+        ["Você", "Eu", "Os dois no mesmo instante"],
+        index=None
+    )
+
+    st.write("")
 
     if st.button("🔓 Confirmar Respostas", use_container_width=True):
-        if p1 == "No carro" and p2 == "Você":
+        if p1 == "Na minha casa" and p2 == "Você":
             st.session_state.quiz_resolvido = True
             st.snow()
         else:
