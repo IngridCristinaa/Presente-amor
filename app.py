@@ -3,10 +3,14 @@ import random
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Configuração da página
+# ========================================================
+# CONFIGURAÇÃO GERAL DA PÁGINA
+# ========================================================
 st.set_page_config(page_title="Para Meu Amor ❤️", page_icon="💌", layout="centered")
 
-# Memória de navegação e cupons
+# ========================================================
+# ESTADO DA SESSÃO (MEMÓRIA DE NAVEGAÇÃO)
+# ========================================================
 if "pagina" not in st.session_state:
     st.session_state.pagina = 1
 
@@ -16,8 +20,11 @@ if "cupons_obtidos" not in st.session_state:
 if "ultimo_cupom" not in st.session_state:
     st.session_state.ultimo_cupom = None
 
+if "quiz_resolvido" not in st.session_state:
+    st.session_state.quiz_resolvido = False
+
 # ========================================================
-# TRILHA SONORA DE FUNDO
+# TRILHA SONORA DE FUNDO (ÁUDIO PERSISTENTE EM LOOP)
 # ========================================================
 URL_MUSICA = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
 
@@ -38,25 +45,20 @@ audio_player_html = f"""
     </script>
 """
 components.html(audio_player_html, height=0, width=0)
-    st.session_state.pagina = 1
-if "cupons_obtidos" not in st.session_state:
-    st.session_state.cupons_obtidos = []
-if "ultimo_cupom" not in st.session_state:
-    st.session_state.ultimo_cupom = None
 
 # ========================================================
-# ESTILO GLOBAL: AURORA BOREAL, GLASSMORPHISM E TIPOGRAFIA
+# ESTILOS CSS GLOBAIS (AURORA BOREAL, GLASSMORPHISM, FONTES)
 # ========================================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Great+Vibes&display=swap');
 
-    /* Ocultar barra superior e rodapé nativos do Streamlit */
+    /* Ocultar elementos padrão do Streamlit */
     header[data-testid="stHeader"] { display: none !important; }
     footer { display: none !important; }
     #MainMenu { visibility: hidden !important; }
 
-    /* Fundo Aurora Boreal e Céu Noturno Profundo */
+    /* Fundo Aurora Boreal e Céu Noturno */
     .stApp {
         background: 
             radial-gradient(circle at 10% 25%, rgba(5, 255, 161, 0.22) 0%, transparent 45%),
@@ -68,7 +70,7 @@ st.markdown("""
         color: #e2e8f0 !important;
     }
 
-    /* Títulos em Outfit */
+    /* Tipografia de Cabeçalhos */
     h1, h2, h3, .stTitle {
         font-family: 'Outfit', sans-serif !important;
         font-weight: 700 !important;
@@ -77,19 +79,19 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(0, 245, 212, 0.35) !important;
     }
 
-    /* Container Card Glassmorphism */
+    /* Cartões Glassmorphism */
     .card-glass {
         background: rgba(15, 23, 42, 0.58) !important;
         backdrop-filter: blur(18px) !important;
         -webkit-backdrop-filter: blur(18px) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 24px !important;
-        padding: 34px 28px !important;
-        margin-bottom: 24px !important;
+        padding: 30px 24px !important;
+        margin-bottom: 20px !important;
         box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* Tag de Status / Badge */
+    /* Tag / Crachá */
     .badge-tag {
         display: inline-flex;
         align-items: center;
@@ -101,11 +103,11 @@ st.markdown("""
         padding: 6px 14px;
         font-size: 13px;
         font-weight: 600;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
         letter-spacing: 0.3px;
     }
 
-    /* Cartão do Cupom Sorteado */
+    /* Cartão de Cupom */
     .cupom-card {
         background: linear-gradient(135deg, rgba(255, 42, 109, 0.15), rgba(123, 44, 191, 0.22));
         border: 1.5px dashed rgba(255, 215, 0, 0.55);
@@ -126,19 +128,19 @@ st.markdown("""
         color: #ffd166;
         font-family: 'Outfit', sans-serif;
         font-weight: 700;
-        font-size: 15px;
+        font-size: 14px;
         letter-spacing: 1px;
         text-transform: uppercase;
         margin-bottom: 6px;
     }
 
     .cupom-texto {
-        font-size: 19px;
+        font-size: 18px;
         font-weight: 600;
         color: #ffffff;
     }
 
-    /* Customização dos Botões Streamlit */
+    /* Estilização Geral dos Botões */
     div.stButton > button {
         background: linear-gradient(135deg, #05ffa1 0%, #00b4d8 100%) !important;
         color: #041019 !important;
@@ -158,7 +160,7 @@ st.markdown("""
         box-shadow: 0 12px 32px rgba(5, 255, 161, 0.55) !important;
     }
 
-    /* Botão Secundário / Navegação */
+    /* Botões de Ação Secundária */
     .botao-secundario div.stButton > button {
         background: linear-gradient(135deg, #7b2cbf 0%, #3a0ca3 100%) !important;
         color: #ffffff !important;
@@ -168,7 +170,40 @@ st.markdown("""
         box-shadow: 0 12px 32px rgba(123, 44, 191, 0.65) !important;
     }
 
-    /* Carta Manuscrita na Página 5 */
+    /* Legibilidade do Quiz (Rádios e Perguntas) */
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] p,
+    div[data-testid="stRadio"] span,
+    div[data-testid="stWidgetLabel"] p,
+    div[data-testid="stWidgetLabel"] label {
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        font-size: 16px !important;
+    }
+
+    div[data-testid="stWidgetLabel"] p {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #05ffa1 !important;
+        margin-bottom: 8px !important;
+    }
+
+    div[role="radiogroup"] > label {
+        background: rgba(255, 255, 255, 0.08) !important;
+        padding: 12px 18px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        margin-bottom: 8px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+
+    div[role="radiogroup"] > label:hover {
+        background: rgba(255, 255, 255, 0.18) !important;
+        border-color: #05ffa1 !important;
+    }
+
+    /* Carta Manuscrita */
     .carta-tinteiro {
         font-family: 'Great Vibes', cursive !important;
         font-size: 28px !important;
@@ -207,27 +242,13 @@ st.markdown("""
         .carta-tinteiro {
             font-size: 23px !important;
             line-height: 1.6 !important;
-            padding: 45px 22px 30px 22px !important;
+            padding: 45px 20px 30px 20px !important;
         }
-    }
-
-    /* Rádio options estilizados */
-    div[role="radiogroup"] > label {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 12px 18px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-    }
-    div[role="radiogroup"] > label:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(5, 255, 161, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Céu de Estrelas Cintilantes em Canvas Fundo (apenas nas páginas 2 a 5)
+# Céu de Estrelas Cintilantes (Páginas 2 a 5)
 if st.session_state.pagina >= 2:
     components.html("""
     <canvas id="sky" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:-1;"></canvas>
@@ -449,7 +470,7 @@ elif st.session_state.pagina == 3:
     cupons = [
         "Vale um cafuné gostoso até dormir 💤",
         "Vale uma massagem relaxante com óleos 💆‍♂️",
-        "Vale escolher o sabor da pizza hoje 🍕",
+        "Vale escolher o jantar de hoje",
         "Vale um abraço quentinho de 5 minutos 🫂",
         "Vale um dia inteiro sem eu reclamar de nada 😇",
         "Vale uma sobremesa especial por minha conta 🍫"
@@ -462,7 +483,6 @@ elif st.session_state.pagina == 3:
             st.session_state.cupons_obtidos.append(sorteado)
         st.balloons()
 
-    # Exibição do cupom sorteado com efeito card brilhante
     if st.session_state.ultimo_cupom:
         st.markdown(f"""
             <div class="cupom-card">
@@ -471,7 +491,6 @@ elif st.session_state.pagina == 3:
             </div>
         """, unsafe_allow_html=True)
 
-    # Mini galeria dos cupons já sorteados
     if st.session_state.cupons_obtidos:
         st.markdown("<p style='font-size: 13px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 20px;'>Cupons Resgatados:</p>", unsafe_allow_html=True)
         for c in st.session_state.cupons_obtidos:
@@ -479,7 +498,7 @@ elif st.session_state.pagina == 3:
 
     st.write("")
     st.markdown("""
-        <div class="card-glass" style="margin-top: 25px; padding: 22px 24px;">
+        <div class="card-glass" style="margin-top: 20px; padding: 20px 24px;">
             <p style="font-size: 14px; color: #cbd5e1; margin: 0;">
                 Agora preciso testar a sua memória antes de liberar a surpresa secreta... 🤫
             </p>
@@ -493,7 +512,7 @@ elif st.session_state.pagina == 3:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================
-# PÁGINA 4: O QUIZ DO AMOR
+# PÁGINA 4: O QUIZ DO AMOR (COM OPÇÕES VISÍVEIS)
 # ========================================================
 elif st.session_state.pagina == 4:
     st.markdown("""
@@ -506,7 +525,6 @@ elif st.session_state.pagina == 4:
         </div>
     """, unsafe_allow_html=True)
 
-    # Perguntas com fundo visível
     p1 = st.radio(
         "1) Onde foi o nosso primeiro beijo?",
         ["No cinema", "Na pracinha", "No carro", "Na minha casa"],
@@ -561,10 +579,9 @@ elif st.session_state.pagina == 4:
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================
-# PÁGINA 5: A CARTA SECRETA COM FOGOS E LACRE
+# PÁGINA 5: A CARTA SECRETA COM FOGOS E TEXTO PERSONALIZADO
 # ========================================================
 elif st.session_state.pagina == 5:
-    # Efeito de corações e fogos translúcidos
     efeito_explosao = """
     <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></canvas>
     <script>
@@ -648,12 +665,11 @@ elif st.session_state.pagina == 5:
         </div>
     """, unsafe_allow_html=True)
 
-    # Carta Manuscrita Estilizada com o texto personalizado completo
     st.markdown("""
     <div class="carta-tinteiro">
         <div class="lacre-cera">❤️</div>
         Meu amor,<br><br>
-        Se você está lendo isso, é porque você passou por todas as etapas (e provou que tem boa memória!). Chegou a uma das minhas partes favoritas deste aplicativo: um pedacinho do meu coração escrito para você.<br><br>
+        Se você está lendo isso, é porque passou por todas as etapas (e provou que tem boa memória!). Chegou a uma das minhas partes favoritas deste aplicativo: um pedacinho do meu coração escrito para você.<br><br>
         Eu criei esse pequeno aplicativo em Python pensando em cada detalhe de nós dois.<br><br>
         Às vezes, acho que nem as palavras mais bonitas seriam suficientes para explicar o quanto você é especial para mim.<br><br>
         Entre tantos caminhos que a vida poderia me levar, sou feliz por ter encontrado você. Você faz parte dos meus pensamentos, dos meus planos e dos sonhos que quero realizar.<br><br>
