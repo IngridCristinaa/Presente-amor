@@ -6,12 +6,19 @@ import streamlit.components.v1 as components
 # Configuração da página
 st.set_page_config(page_title="Para Meu Amor ❤️", page_icon="💌", layout="centered")
 
-# Memória de navegação e cupons sorteados
+# Memória de navegação e cupons
 if "pagina" not in st.session_state:
-    # ========================================================
-# TRILHA SONORA DE FUNDO (ÁUDIO PERSISTENTE EM LOOP)
+    st.session_state.pagina = 1
+
+if "cupons_obtidos" not in st.session_state:
+    st.session_state.cupons_obtidos = []
+
+if "ultimo_cupom" not in st.session_state:
+    st.session_state.ultimo_cupom = None
+
 # ========================================================
-# Pode utilizar uma hiperligação direta para um ficheiro .mp3 na web ou um caminho/base64 local
+# TRILHA SONORA DE FUNDO
+# ========================================================
 URL_MUSICA = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
 
 audio_player_html = f"""
@@ -21,10 +28,8 @@ audio_player_html = f"""
     <script>
         const audio = document.getElementById('bg-audio');
         if (audio) {{
-            audio.volume = 0.35; // Volume a 35% para ficar suave
-            // Tenta reproduzir automaticamente caso já tenha ocorrido interação prévia
+            audio.volume = 0.35;
             audio.play().catch(() => {{
-                // Caso o navegador bloqueie o autoplay, inicia no primeiro clique na página
                 document.addEventListener('click', () => {{
                     audio.play();
                 }}, {{ once: true }});
